@@ -1,0 +1,7 @@
+CHIP prvia {
+    IN x, y;
+    OUT out;
+
+    PARTS:
+    Nor(a = x, b = y, out = out);
+}
