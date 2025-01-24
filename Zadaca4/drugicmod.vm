@@ -1,0 +1,20 @@
+function mod 2
+
+push argument 0
+pop local 1
+
+label LOOP_START
+push local 1
+push argument 1
+lt
+if-goto END_MOD
+
+push local 1
+push argument 1
+sub
+pop local 1
+goto LOOP_START
+
+label END_MOD
+push local 1
+return
