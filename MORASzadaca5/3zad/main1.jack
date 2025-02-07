@@ -1,0 +1,8 @@
+class main1
+{
+	function void main()
+	{
+		do Graph.draw();
+		return;
+	}
+}
