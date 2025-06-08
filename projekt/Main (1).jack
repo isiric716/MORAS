@@ -1,0 +1,220 @@
+class Main {
+    function int getRandom(int seed, int max) {
+        var int a, c, m;
+        let a = 219;
+        let c = 32749;
+        let m = 16384;
+        
+        let seed = seed + 1;
+        let seed = ((a * seed) + c) - ((((a * seed) + c) / m) * m);
+        if (seed < 0) { let seed = -seed; }
+        return seed - ((seed / max) * max);
+    }
+
+    function void main() {
+        var int x, y;          
+        var int vy;            
+        var int scroll;        
+        var boolean jump;
+        var char key;
+        var int score;
+        var Array px, py;      
+        var int i;      
+        var int newX, newY;
+        var boolean onGround;
+        var int currentPlatform;
+        var int displayY;
+        var int seed;
+        var int lastX;
+        var int randomValue;
+        var int platformZone;
+        
+        let seed = 7919;
+        let px = Array.new(5);
+        let py = Array.new(5);
+        
+        // Početne platforme potpuno random
+        let px[0] = 220; let py[0] = 220;
+        let px[1] = Main.getRandom(seed, 350) + 50; let py[1] = 190;
+        let seed = seed + 7919;
+        let px[2] = Main.getRandom(seed, 350) + 50; let py[2] = 160;
+        let seed = seed + 7919;
+        let px[3] = Main.getRandom(seed, 350) + 50; let py[3] = 130;
+        let seed = seed + 7919;
+        let px[4] = Main.getRandom(seed, 350) + 50; let py[4] = 100;
+        
+        let lastX = px[4];
+        
+        let x = 240;
+        let y = 200;
+        let displayY = y;
+        let vy = 0;
+        let scroll = 0;
+        let jump = false;
+        let score = 0;
+        let onGround = true;
+        let currentPlatform = -1;
+        
+        while (~(key = 81)) {
+            do Screen.clearScreen();
+            
+            // Platforme
+            let i = 0;
+            while (i < 5) {
+                if ((py[i] + scroll) < 240) {
+                    do Screen.drawRectangle(px[i], py[i] + scroll, 
+                                         px[i] + 60, py[i] + scroll + 8);
+                }
+                let i = i + 1;
+            }
+            
+            // Igrač
+            let displayY = y + scroll;
+            if (displayY < 240) {
+                do Screen.drawRectangle(x, displayY, x + 16, displayY + 16);
+            }
+            
+            do Output.moveCursor(0, 0);
+            do Output.printString("Score: ");
+            do Output.printInt(score);
+            
+            // Kontrole
+            let key = Keyboard.keyPressed();
+            
+            if (key = 130) { 
+                let x = x - 6;
+                if (currentPlatform > -1) {
+                    if (~((x < (px[currentPlatform] + 60)) & ((x + 16) > px[currentPlatform]))) {
+                        let jump = true;
+                        let currentPlatform = -1;
+                        let onGround = false;
+                    }
+                }
+            }
+            if (key = 132) { 
+                let x = x + 6;
+                if (currentPlatform > -1) {
+                    if (~((x < (px[currentPlatform] + 60)) & ((x + 16) > px[currentPlatform]))) {
+                        let jump = true;
+                        let currentPlatform = -1;
+                        let onGround = false;
+                    }
+                }
+            }
+            
+            if ((key = 131) & (onGround | (currentPlatform > -1))) {
+                let vy = -13;
+                let jump = true;
+                let onGround = false;
+                let currentPlatform = -1;
+            }
+            
+            if (jump) {
+                let vy = vy + 1;
+                let y = y + vy;
+            }
+            
+            // Scrolling i generiranje novih platformi
+            if ((y + scroll) < 120) {
+                let scroll = scroll + 2;
+                
+                if ((py[0] + scroll) > 240) {
+                    let i = 0;
+                    while (i < 4) {
+                        let px[i] = px[i + 1];
+                        let py[i] = py[i + 1];
+                        let i = i + 1;
+                    }
+                    
+                    // Potpuno nova logika za generiranje platformi
+                    let seed = seed + 7919;
+                    
+                    // Prvo odredimo zonu (1-4) gdje će platforma biti
+                    let platformZone = Main.getRandom(seed, 4);
+                    
+                    // Svaka zona ima svoj raspon
+                    if (platformZone = 0) {
+                        let newX = Main.getRandom(seed, 100) + 50;    // 50-150 (lijevo)
+                    }
+                    if (platformZone = 1) {
+                        let newX = Main.getRandom(seed, 100) + 150;   // 150-250 (lijevi centar)
+                    }
+                    if (platformZone = 2) {
+                        let newX = Main.getRandom(seed, 100) + 250;   // 250-350 (desni centar)
+                    }
+                    if (platformZone = 3) {
+                        let newX = Main.getRandom(seed, 100) + 350;   // 350-450 (desno)
+                    }
+                    
+                    // Dodatni random koji može potpuno promijeniti poziciju
+                    let seed = seed + 7919;
+                    if (Main.getRandom(seed, 5) = 0) {  // 20% šansa
+                        let newX = Main.getRandom(seed, 400) + 50;    // potpuno random 50-450
+                    }
+                    
+                    // Spriječimo da dvije platforme budu preblizu jedna drugoj
+                    if ((newX > (lastX - 50)) & (newX < (lastX + 50))) {
+                        if (newX < lastX) {
+                            let newX = newX - 100;
+                        } else {
+                            let newX = newX + 100;
+                        }
+                    }
+                    
+                    // Granice ekrana
+                    if (newX < 50) { let newX = 50; }
+                    if (newX > 400) { let newX = 400; }
+                    
+                    // Random vertikalni razmak (25-45)
+                    let seed = seed + 7919;
+                    let newY = py[3] - 25 - Main.getRandom(seed, 20);
+                    
+                    let px[4] = newX;
+                    let py[4] = newY;
+                    let lastX = newX;
+                }
+            }
+            
+            // Kolizije s platformama
+            let i = 0;
+            while (i < 5) {
+                if ((x < (px[i] + 60)) & ((x + 16) > px[i])) {
+                    if (((y + 16) > py[i]) & (y < (py[i] + 8))) {
+                        if (vy > 0) {
+                            let y = py[i] - 16;
+                            let vy = 0;
+                            let jump = false;
+                            let currentPlatform = i;
+                            let score = score + 1;
+                        }
+                    }
+                }
+                let i = i + 1;
+            }
+            
+            // Game over
+            if (y > (py[0] + 100)) {
+                do Screen.clearScreen();
+                do Output.moveCursor(10, 27);
+                do Output.printString("Game Over!");
+                do Output.moveCursor(12, 27);
+                do Output.printString("Score: ");
+                do Output.printInt(score);
+                
+                do px.dispose();
+                do py.dispose();
+                return;
+            }
+            
+            // Granice ekrana
+            if (x < 0) { let x = 0; }
+            if (x > 496) { let x = 496; }
+            
+            do Sys.wait(33);
+        }
+        
+        do px.dispose();
+        do py.dispose();
+        return;
+    }
+}
